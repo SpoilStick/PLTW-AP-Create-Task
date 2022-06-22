@@ -1,0 +1,168 @@
+#!/bin/python3
+# Connect 4 Code
+
+import random
+import turtle
+
+class Board:
+  def __init__(self, board, progress, connect, cellLength, center, chips=None, color=None):
+    self.board = board
+    self.height = len(board)
+    self.width = len(board[0])
+    self.progress = True
+    self.result = -1
+    self.connect = connect
+    self.cellLength = cellLength
+    self.center = center
+    self.chips = chips or {}
+    self.color = color or {}
+
+  def chooseChip(self, typ): # Determines the column in which chips are placed
+    if typ == 1:
+      col = input("Enter column")
+  
+    if typ != 1:
+      col = input("Enter column")
+      #col = random.randint(0,6)
+  
+    try: # Try to place chip
+      self.placeChip(int(col), typ)
+      self.evalBoard()
+    except: # If the chip can't be placed, retry
+      print("Invalid column")
+      self.chooseChip(typ)
+
+  def placeChip(self, column, typ): # Determines the row and changes the board
+    for row in range(self.height - 1): # Checks from top down for empty cells above chips
+      if (self.board[row][column] == 0) & (self.board[row + 1][column] != 0):
+        self.drawChip(row, column, typ)
+        self.board[row][column] = typ
+
+    if (self.board[self.height - 1][column] == 0): # Checks if the lowest cell is empty
+      self.drawChip(self.height - 1, column, typ)
+      self.board[self.height - 1][column] = typ
+
+  def evalBoard(self): # Determines if the game should end
+    global progress
+
+    if 0 not in [x for y in self.board for x in y]: # Use list comprehension to convert the board to a list of numbers
+      selfprogress = False
+      self.result = "draw"
+      return self.result
+  
+    for chip in self.chips: # Vertical in a row
+      for x in range(self.width):
+        for y in range(self.height - self.connect + 1):
+          for i in range(self.connect):
+            if (self.board[y + i][x] != chip):
+              break
+          else:
+            self.progress = False
+            self.result = chip
+            return self.result
+  
+    for chip in self.chips: # Horizontal in a row
+      for x in range(self.width - self.connect + 1):
+        for y in range(self.height):
+          for i in range(self.connect):
+            if (self.board[y][x + i] != chip):
+              break
+          else:
+            self.progress = False
+            self.result = chip
+            return self.result
+
+    for chip in self.chips: # Down right / up left diagonal
+      for x in range(self.width - self.connect + 1):
+        for y in range(self.height - self.connect + 1):
+          for i in range(self.connect):
+            if (self.board[y + i][x + i] != chip):
+              break
+          else:
+            self.progress = False
+            self.result = chip
+            return self.result
+
+    for chip in self.chips: # Down left / up right diagonal
+      for x in range(self.width - self.connect, self.width):
+        for y in range(self.height - self.connect + 1):
+          for i in range(self.connect):
+            if (self.board[y + i][x - i] != chip):
+              break
+          else:
+            self.progress = False
+            self.result = chip
+            return self.result
+
+
+  def drawBoard(self): # Draws the grid
+    for x in range(self.width + 1):
+      v_line = turtle.Turtle()
+      v_line.speed(0)
+      v_line.penup()
+      v_line.hideturtle()
+      v_line.goto(self.center[0] + self.cellLength * (x - self.width / 2), 
+                  self.center[1] - self.cellLength * self.height / 2)
+      v_line.pendown()
+      v_line.goto(self.center[0] + self.cellLength * (x - self.width / 2),
+                  self.center[1] + self.cellLength * self.height / 2)
+  
+    for y in range(self.height + 1):
+      h_line = turtle.Turtle()
+      h_line.speed(0)
+      h_line.penup()
+      h_line.hideturtle()
+      h_line.goto(self.center[0] - self.cellLength * self.width / 2,
+                  self.center[1] + self.cellLength * (y - self.height / 2))
+      h_line.pendown()
+      h_line.goto(self.center[0] + self.cellLength * self.width / 2,
+                  self.center[1] + self.cellLength * (y - self.height / 2))
+  
+  def drawChip(self, row, column, type): # Creates a turtle for each chip
+    chip = turtle.Turtle()
+    chip.speed(0)
+    chip.penup()
+    chip.shape("circle")
+    chip.color(self.color[type])
+    chip.goto(self.center[0] + self.cellLength * (column - (self.width - 1) / 2),
+              self.center[1] - self.cellLength * (row - (self.height - 1) / 2))
+
+# Game variables
+width = 7
+height = 6
+array = [([0] * width) for x in range(height)] # Use list comprehension to create the board
+connect = 4 # Length required in a row to win
+length = 20 # Turtle size is 20 and can't be changed
+center = (0, 0) # Defined as a tuple, doesn't really matter for this
+chip = [1,2] # Assign values: 1 = player chip, 2 = not player chip
+color = {1 : "red", 2 : "yellow"} # Assign colors to each chip
+
+# Create board
+game = Board(array, True, connect, length, center, chip, color)
+game.drawBoard()
+
+# Start game
+while(game.progress):
+  # P1's turn
+  game.chooseChip(1)
+  # P2's turn
+  if game.progress: # Prevents game from continuing if P1 wins
+    game.chooseChip(2)
+
+else: # Game finished
+  writer = turtle.Turtle()
+  font_setup = ("Arial", 20, "normal")
+  writer.clear()
+  writer.penup()
+  writer.goto(game.center[0], game.center[1] - (game.height + 2) * game.cellLength / 2)
+  writer.hideturtle()
+  writer.down()
+  
+  print(game.board)
+  
+  if game.result == "draw":
+    writer.write("Draw")
+  elif game.result == chip[0]:
+    writer.write(color[chip[0]].title() + " wins")
+  elif game.result == chip[1]:
+    writer.write(color[chip[1]].title() + " wins")

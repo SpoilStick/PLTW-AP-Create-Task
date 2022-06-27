@@ -2,4 +2,4 @@
 
 Connect 4
 
-Originally used in trinket, needs Turtle and Random
+Originally used in trinket, needs Turtle and Random modules
